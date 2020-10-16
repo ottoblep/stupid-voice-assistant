@@ -60,8 +60,10 @@ def getweather():
     content = f.read()
     content=str(content, encoding='utf-8', errors='strict')
     content=content.replace("<br />","")
+    content=content.replace("<br>","")
+    content=content.replace("<p>","")
     start = content.find("<h3>Wetter heute,")
-    end = content.find("Gilching liegt in")
+    end = content.find(" liegt in")
     weathertext = content[start+66:end-24]
     weathertext=weathertext.replace("°C","°")
     if start!=-1 and end!=-1:
