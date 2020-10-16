@@ -7,13 +7,17 @@ import inflection as inflection
 import random
 import requests
 from pprint import pprint
+import pycurl
+from io import BytesIO
 
+#Forbes Quote
+quote_url = "http://www.forbes.com/forbesapi/thought/uri.json?enrich=true&query=1&relatedlimit=5"
 # OpenWeatherMap
+#owm_url = "http://pro.openweathermap.org/data/2.5/weather?zip=82205,de&appid=375638db77406af8706d8dae70aedaeb"
 
-owm_url = "http://pro.openweathermap.org/data/2.5/forecast/hourly?zip=&appid="
-
-greetings = ["Good Morning","Rise and Shine","Wake Up","Get up for your right","Get started"]
-quoteintros = ["Your Quote is","Heres your Quote","A Quote for you","Heres something to think about","Get this","A wise man once said"]
+#Fixed Texts
+greetings = ["good morning","rise and shine","wake up","get up for your right","get started","time to get up","get your lazy ass out of bed"]
+quoteintros = ["your quote is","heres your quote","a quote for you","heres something to think about","get this","a wise man once said"]
 
 ##def activator():
 ##    while True:
@@ -28,43 +32,69 @@ quoteintros = ["Your Quote is","Heres your Quote","A Quote for you","Heres somet
 ##          ABSPIELEN
 
 def getweather():   
-    weather_data = requests.get(owm_url).json()
-    pprint(weather_data)
+    #weather_data = requests.get(owm_url).json()
+    #Fileweather_object = open(r"sentences.txt","w")
+    #Fileweather_object.write(str(weather_data))
+    #pprint(weather_data)
+    c = pycurl.Curl()
+    buffer = BytesIO()
+    c.setopt(c.URL, "wttr.in/Gilching?format=%C|+%t|+%p|+%D")
+    c.setopt(c.WRITEDATA, buffer)
+    c.perform()
+    c.close()
+    body = buffer.getvalue()
+    body = str(body)
+    body=body.strip("\"' '")
+    weatherlist = body.split("|")
+    weatherlist[0]=weatherlist[0][2:]
+    return weatherlist
+    
 
 def getquote():
-    url = "http://www.forbes.com/forbesapi/thought/uri.json?enrich=true&query=1&relatedlimit=5"
-    response = requests.get(url)
+    response = requests.get(quote_url)
     data = response.json()
     quote=data['thought']['quote'].strip("(' )")
-    pprint(data)
     return quote
 
     
-def computemessage(message):
+def computemessage():
     #creates wav from sentences.txt
-    os.system("python quick_start.py -b") 
+    os.system("gtts-cli -f sentences.txt -o out.mp3 ")
+    os.system("vlc out.mp3")
+    
     
 def createmessage():
+    #Date
     my_date = date.today()
     datelist = str(my_date).split("-")
     year = datelist[0]
     month = datelist[1]
     day = datelist[2]
     weekday = calendar.day_name[my_date.weekday()]
-    
+    #Time
     time = str(datetime.now().time())
     timelist = time.split(":")
     hour = timelist[0];
     minute = timelist[1];
     second = timelist[2];
+    #Weather
+    weatherlist=getweather()
+    condition = weatherlist[0]
+    condition = condition.replace(',','')
+    temp = weatherlist[1]
+    temp = temp.split('\\',1)
+    rain = weatherlist[2]
+    sunrisetime = weatherlist[3]
     
-    message=random.choice(greetings)+" Severin. It is "+weekday+". "+inflection.ordinalize(int(day))+" of "+calendar.month_name[int(month)]+" "+year+". "
-    message+=random.choice(quoteintros)+": "+getquote()          
+    message=random.choice(greetings)+" severin. It is "+weekday+". "+inflection.ordinalize(int(day))+" of "+calendar.month_name[int(month)]+" "+year+". "
+    message+=" weather condition is "+condition+". current temperature "+temp[0]+" Degrees. predicted rainfall amount "+rain+". sunrise is at "+sunrisetime[:3]+"."
+    message+=random.choice(quoteintros)+". "+getquote()       
     print(message)
     File_object = open(r"sentences.txt","w")
     File_object.write(message)
 
 createmessage()
+#computemessage()
 
 
 
