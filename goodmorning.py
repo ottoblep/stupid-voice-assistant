@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from datetime import datetime
 from datetime import date
 import os
@@ -6,17 +8,18 @@ import calendar
 import inflection as inflection
 import random
 import requests
+import urllib.request
 import pycurl
+import pprint
 from io import BytesIO
+import io
 
 #Forbes Quote
 quote_url = "http://www.forbes.com/forbesapi/thought/uri.json?enrich=true&query=1&relatedlimit=5"
-# OpenWeatherMap
-#owm_url = "http://pro.openweathermap.org/data/2.5/weather?zip=82205,de&appid=375638db77406af8706d8dae70aedaeb"
 
 #Fixed Texts
-greetings = ["good morning","rise and shine","wake up","get up for your right","get started","time to get up","get your lazy ass out of bed"]
-quoteintros = ["your quote is","heres your quote","a quote for you","heres something to think about","get this","a wise man once said"]
+greetings = ["Guten Morgen","Wach auf","Mach dich auf die Socken","Steh Auf","Zeit Aufzustehen"]
+quoteintros = ["dein zitat lautet","hier ist dein zitat","ein zitat für dich","hier ist was zum nachdenken","hör dir das an","ein weiser mann sagte mal"]
 
 ##def activator():
 ##    while True:
@@ -30,35 +33,59 @@ quoteintros = ["your quote is","heres your quote","a quote for you","heres somet
 ##        if timelist[0]<10 and timelist[0]>5 and ADDITIONAL CONDITION:
 ##          ABSPIELEN
 
+def monatsname(monat):
+    if monat==1: return "Januar"
+    if monat==2: return "Februar"
+    if monat==3: return "März"
+    if monat==4: return "April"
+    if monat==5: return "Mai"
+    if monat==6: return "Juni"
+    if monat==7: return "Juli"
+    if monat==8: return "August"
+    if monat==9: return "September"
+    if monat==10: return "Oktober"
+    if monat==11: return "November"
+    if monat==12: return "Dezember"
+def wochentag(tag):
+    if tag=="Monday": return "Montag"
+    if tag=="Tuesday": return "Dienstag"
+    if tag=="Wednesday": return "Mittwoch"
+    if tag=="Thursday": return "Donnerstag"
+    if tag=="Friday": return "Freitag"
+    if tag=="Saturday": return "Samstag"
+    if tag=="Sunday": return "Sonntag"
 def getweather():   
-    #weather_data = requests.get(owm_url).json()
-    #Fileweather_object = open(r"sentences.txt","w")
-    #Fileweather_object.write(str(weather_data))
-    #pprint(weather_data)
-    c = pycurl.Curl()
-    buffer = BytesIO()
-    c.setopt(c.URL, "wttr.in/Gilching?format=%C|+%t|+%p|+%D|+%w")
-    c.setopt(c.WRITEDATA, buffer)
-    c.perform()
-    c.close()
-    body = buffer.getvalue()
-    body = str(body)
-    body=body.strip("\"' '")
-    weatherlist = body.split("|")
-    weatherlist[0]=weatherlist[0][2:]
-    return weatherlist
-    
+    opener = urllib.request.FancyURLopener({})
+    f = opener.open("https://www.wetter.com/wetter_aktuell/wettervorhersage/3_tagesvorhersage/deutschland/gilching/DE0003429.html")
+    content = f.read()
+    content=str(content, encoding='utf-8', errors='strict')
+    content=content.replace("<br />","")
+    start = content.find("<h3>Wetter heute,")
+    end = content.find("Gilching liegt in")
+    weathertext = content[start+66:end-24]
+    weathertext=weathertext.replace("°C","°")
+    if start!=-1 and end!=-1:
+        return weathertext 
 
 def getquote():
-    response = requests.get(quote_url)
-    data = response.json()
-    quote=data['thought']['quote'].strip("(' )")
-    return quote
+##    response = requests.get(quote_url)
+##    data = response.json()
+##    quote=data['thought']['quote'].strip("(' )")
+##    return quote
 
-    
+    opener = urllib.request.FancyURLopener({})
+    f = opener.open("https://www.zitatdestages.net/")
+    content = f.read()
+    content=str(content, encoding='utf-8', errors='strict')
+    start = content.find("<p class=\"blog-title\">")
+    end = content.find("</p><p class=\"blog")
+    quotetext = content[start+22:end]
+    if start!=-1 and end!=-1:
+        return quotetext 
+
 def computemessage():
     #creates wav from sentences.txt
-    os.system("gtts-cli -f sentences.txt -o out.mp3 ")
+    os.system("gtts-cli -l de -f message.txt -o out.mp3 ")
     os.system("vlc out.mp3")
     
     
@@ -77,27 +104,19 @@ def createmessage():
     minute = timelist[1];
     second = timelist[2];
     #Weather
-    weatherlist=getweather()
-    condition = weatherlist[0]
-    condition = condition.split(',')
-    if condition[1]!="":
-        condition[0] = condition[0]+" and "+condition[1]
-    temp = weatherlist[1]
-    temp = temp.split('\\',1)
-    rain = weatherlist[2]
-    sunrisetime = weatherlist[3]
-    wind=weatherlist[4]
-    windlist = wind.split('\\x97')
-    
-    message=random.choice(greetings)+" severin. It is "+weekday+". "+inflection.ordinalize(int(day))+" of "+calendar.month_name[int(month)]+" "+year+"."
-    message+=" weather condition is "+condition[0]+". current temperature "+temp[0]+" Degrees. Wind Speed "+windlist[1]+". predicted rainfall amount "+rain+". sunrise is at "+sunrisetime[:6]+"."
+    weathermessage=getweather()
+    #Compose Message
+    message=random.choice(greetings)+". Es ist "+wochentag(weekday)+". "+day+"ter "+monatsname(int(month))+" "+year+"."
+    message+=" "+weathermessage+" "
     message+=random.choice(quoteintros)+". "+getquote()       
     print(message)
-    File_object = open(r"sentences.txt","w")
-    File_object.write(message)
+    # process Unicode text
+    with io.open("message.txt",'w',encoding='utf8') as f:
+        f.write(message)
+
 
 createmessage()
-#computemessage()
+computemessage()
 
 
 
