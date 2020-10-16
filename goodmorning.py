@@ -87,7 +87,7 @@ def createmessage():
     sunrisetime = weatherlist[3]
     
     message=random.choice(greetings)+" severin. It is "+weekday+". "+inflection.ordinalize(int(day))+" of "+calendar.month_name[int(month)]+" "+year+". "
-    message+=" weather condition is "+condition+". current temperature "+temp[0]+" Degrees. predicted rainfall amount "+rain+". sunrise is at "+sunrisetime[:3]+"."
+    message+=" weather condition is "+condition+". current temperature "+temp[0]+" Degrees. predicted rainfall amount "+rain+". sunrise is at "+sunrisetime[:6]+"."
     message+=random.choice(quoteintros)+". "+getquote()       
     print(message)
     File_object = open(r"sentences.txt","w")
