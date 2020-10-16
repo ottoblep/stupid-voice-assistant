@@ -6,7 +6,6 @@ import calendar
 import inflection as inflection
 import random
 import requests
-from pprint import pprint
 import pycurl
 from io import BytesIO
 
@@ -38,7 +37,7 @@ def getweather():
     #pprint(weather_data)
     c = pycurl.Curl()
     buffer = BytesIO()
-    c.setopt(c.URL, "wttr.in/Gilching?format=%C|+%t|+%p|+%D")
+    c.setopt(c.URL, "wttr.in/Gilching?format=%C|+%t|+%p|+%D|+%w")
     c.setopt(c.WRITEDATA, buffer)
     c.perform()
     c.close()
@@ -87,16 +86,18 @@ def createmessage():
     temp = temp.split('\\',1)
     rain = weatherlist[2]
     sunrisetime = weatherlist[3]
+    wind=weatherlist[4]
+    windlist = wind.split('\\x97')
     
     message=random.choice(greetings)+" severin. It is "+weekday+". "+inflection.ordinalize(int(day))+" of "+calendar.month_name[int(month)]+" "+year+"."
-    message+=" weather condition is "+condition[0]+". current temperature "+temp[0]+" Degrees. predicted rainfall amount "+rain+". sunrise is at "+sunrisetime[:6]+"."
+    message+=" weather condition is "+condition[0]+". current temperature "+temp[0]+" Degrees. Wind Speed "+windlist[1]+". predicted rainfall amount "+rain+". sunrise is at "+sunrisetime[:6]+"."
     message+=random.choice(quoteintros)+". "+getquote()       
     print(message)
     File_object = open(r"sentences.txt","w")
     File_object.write(message)
 
 createmessage()
-computemessage()
+#computemessage()
 
 
 
