@@ -19,7 +19,8 @@ from playsound import playsound
 import json
 import threading
 from gtts import gTTS
-
+import wikipedia
+wikipedia.set_lang('de')
 
 #Fixed Texts
 quoteintros = ["hier ist ein zitat","ein zitat für dich","hier ein zitat","das zitat des tages","das heutige zitat"]
@@ -47,21 +48,6 @@ def wochentag(tag):
     if tag=="Saturday": return "Samstag"
     if tag=="Sunday": return "Sonntag"
     
-def getweather():
-    opener = urllib.request.FancyURLopener({})
-    f = opener.open("https://www.wetter.com/wetter_aktuell/wettervorhersage/3_tagesvorhersage/deutschland/gilching/DE0003429.html")
-    content = f.read()
-    content=str(content, encoding='utf-8', errors='strict')
-    content=content.replace("<br />","")
-    content=content.replace("<br>","")
-    content=content.replace("<p>","")
-    start = content.find("<h3>Wetter heute,")
-    end = content.find(" liegt in")
-    weathertext = content[start+66:end-24]
-    weathertext=weathertext.replace("°C","°")
-    if start!=-1 and end!=-1:
-        return weathertext
-    
 def getquote():
     opener = urllib.request.FancyURLopener({})
     f = opener.open("https://www.zitatdestages.net/")
@@ -74,7 +60,6 @@ def getquote():
         out = random.choice(quoteintros)+". "+quotetext
         return out
     else: print("Scraper Failed")
-    
 def getdate():
     #Date
     my_date = date.today()
@@ -85,6 +70,10 @@ def getdate():
     weekday = calendar.day_name[my_date.weekday()]
     message="Es ist "+wochentag(weekday)+". "+day+"ter "+monatsname(int(month))+" "+year+"."
     return message
+def gettime():
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    return current_time
 def getweather():
     opener = urllib.request.FancyURLopener({})
     f = opener.open("https://www.wetter.com/wetter_aktuell/wettervorhersage/3_tagesvorhersage/deutschland/gilching/DE0003429.html")
@@ -98,27 +87,40 @@ def getweather():
     weathertext = content[start+66:end-3]
     weathertext=weathertext.replace("°C","°")
     if start!=-1 and end!=-1:
-        return weathertext 
-    
+        return weathertext
+def radio(channel):
+    os.system("omxplayer blup.mp3")
+    if channel=="jazz":os.system("omxplayer https://live.wostreaming.net/direct/ppm-jazz24aac-ibc1")
+    if channel=="rock":os.system("omxplayer http://www.rockradio.de:8090")
+    if channel=="klassik":os.system("omxplayer http://br-brklassik-live.cast.addradio.de/br/brklassik/live/mp3/mid")
+    if channel=="nachrichten":os.system("omxplayer http://br-b5aktuell-live.cast.addradio.de/br/b5aktuell/live/mp3/mid")
 def play(message):
+    os.system("omxplayer blup.mp3")
     print("Output: "+message)
     # process Unicode text
     with io.open("message.txt",'w',encoding='utf8') as f:
         f.write(message)
-    #write tts out to file like object and play it
+    #write tts out to file like object or mp3 and play it
 #    mp3_fp = BytesIO()
     tts = gTTS(message, lang='de')
 #    tts.write_to_fp(mp3_fp)
-    
     tts.save('out.mp3')
     os.system("omxplayer out.mp3")
     
 def actionthread(command):
-    print ("Creating Thread for "+command)
+    print ("Input:"+command)
     if command=="wetter": play(getweather())
-    if command=="datum": play(getdate())
+    if command=="datum" or command=="wochentag": play(getdate())
+    if command=="uhrzeit": play(gettime())
     if command=="zitat": play(getquote())
-    if command=="test": play("Test Test Test")
+#    if command=="test": play("Test Test Test")
+    if command[:9]=="wikipedia": play("Wikipedia Artikel für "+command[10:]+". "+wikipedia.summary(command[10:]))
+    if command=="stopp": os.system("pkill omxplayer")
+    if command=="jazz": radio("jazz")
+    if command=="rock": radio("rock")
+    if command=="klassik": radio("klassik")
+    if command=="nachrichten": radio("nachrichten")
+     
     
 def listenloop():
     if not os.path.exists("model"):
