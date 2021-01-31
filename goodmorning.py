@@ -78,7 +78,7 @@ def gettime():
     return current_time
 def getweather():
     opener = urllib.request.FancyURLopener({})
-    f = opener.open("https://www.wetter.com/wetter_aktuell/wettervorhersage/3_tagesvorhersage/deutschland/gilching/DE0003429.html")
+    f = opener.open("https://www.wetter.com/wetter_aktuell/wettervorhersage/3_tagesvorhersage/deutschland/berlin/DE0001020.html")
     content = f.read()
     content=str(content, encoding='utf-8', errors='strict')
     content=content.replace("<br />","")
